@@ -13,6 +13,7 @@ import { TEMPLATE_MANIFEST, getTemplatesDir } from './templates.js';
 import { runMigrations } from './migrations.js';
 import { scrubEmails } from './email-scrub.js';
 import { getPackageVersion, stampVersion, readInstalledVersion } from './version.js';
+import { writeCodexAgentFiles, parseTeamMdAgents } from '@bradygaster/squad-sdk/config';
 
 export interface UpgradeOptions {
   migrateDirectory?: boolean;
@@ -574,7 +575,27 @@ export async function runUpgrade(dest: string, options: UpgradeOptions = {}): Pr
   
   // Run infrastructure ensure checks
   runEnsureChecks(dest, templatesDir, filesUpdated);
-  
+
+  // Refresh .codex/agents/ for Codex CLI (`codex --agent squad --yolo`)
+  try {
+    const codexAgents = parseTeamMdAgents(dest);
+    if (codexAgents.length > 0) {
+      const teamName = path.basename(dest);
+      const written = writeCodexAgentFiles({
+        projectRoot: dest,
+        teamName,
+        agents: codexAgents,
+        force: true,
+      });
+      if (written.length > 0) {
+        success(`refreshed ${written.length} Codex CLI agent file(s) in .codex/agents/`);
+        filesUpdated.push(...written);
+      }
+    }
+  } catch {
+    // Non-fatal — Codex CLI integration is optional
+  }
+
   console.log();
   info(`Upgrade complete: v${fromLabel} → v${cliVersion}`);
   if (migrationsApplied.some(m => m.toLowerCase().includes('scrub email'))) {

@@ -22,6 +22,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { success, warn, info, dim, BOLD, RESET, YELLOW, GREEN, RED } from '../core/output.js';
 import { fatal } from '../core/errors.js';
+import { writeCodexAgentFiles } from '@bradygaster/squad-sdk/config';
 
 import type {
   SquadSDKConfig,
@@ -548,6 +549,27 @@ export async function runBuild(cwd: string, options: BuildOptions = {}): Promise
   success(`squad build complete — generated ${result.written} file(s)`);
   if (result.skipped > 0) {
     dim(`  (${result.skipped} protected file(s) skipped)`);
+  }
+
+  // Generate .codex/agents/ for Codex CLI (`codex --agent squad --yolo`)
+  try {
+    const teamName = config.team?.name ?? path.basename(cwd);
+    const codexAgents = config.agents.map(a => ({
+      name: a.name,
+      role: typeof a.model === 'string' ? a.role : a.role,
+      description: a.description,
+    }));
+    const written = writeCodexAgentFiles({
+      projectRoot: cwd,
+      teamName,
+      agents: codexAgents,
+      force: true,
+    });
+    if (written.length > 0) {
+      dim(`  Codex CLI: generated ${written.length} agent file(s) in .codex/agents/`);
+    }
+  } catch {
+    // Non-fatal
   }
 }
 

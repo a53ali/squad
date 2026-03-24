@@ -47,13 +47,19 @@ gh auth login
 
 **✓ Validate:** Run `gh auth status` — you should see "Logged in to github.com".
 
-### 4. Open Copilot and go
+### 4. Open your AI agent and go
 
+**GitHub Copilot:**
 ```
 copilot --agent squad --yolo
 ```
 
-> **Why `--yolo`?** Squad makes many tool calls in a typical session. Without it, Copilot will prompt you to approve each one.
+**Codex CLI** (auto-generated on `squad init`):
+```
+codex --agent squad --yolo
+```
+
+> **Why `--yolo`?** Squad makes many tool calls in a typical session. Without it, your agent will prompt you to approve each one.
 
 **In VS Code**, open Copilot Chat and select the **Squad** agent.
 
@@ -249,6 +255,47 @@ export default defineSquad({
 ```
 
 Run `squad build` to generate all the markdown. See the [SDK-First Mode Guide](docs/src/content/docs/sdk-first-mode.md) for full documentation.
+
+---
+
+## Codex CLI Integration
+
+`squad init` and `squad upgrade` automatically generate `.codex/agents/` config files so your team works natively with [Codex CLI](https://github.com/openai/codex).
+
+### Quick start
+
+```bash
+npm install -g @openai/codex
+squad init            # generates .codex/agents/squad.toml + per-agent TOMLs
+codex --agent squad --yolo
+```
+
+### What gets generated
+
+```
+.codex/
+└── agents/
+    ├── squad.toml       ← coordinator: routes work, spawns members
+    ├── edie.toml        ← TypeScript Engineer
+    ├── mcmanus.toml     ← DevRel
+    └── ...              ← one file per squad member
+```
+
+Each agent TOML contains `name`, `description`, and `developer_instructions` that reference the agent's charter in `.squad/agents/<name>/charter.md`. Codex reads these automatically when it spawns a subagent.
+
+### Keeping files fresh
+
+| Command | Effect on `.codex/agents/` |
+|---------|---------------------------|
+| `squad init` | Creates files (skips existing) |
+| `squad upgrade` | Overwrites all files from current team.md |
+| `squad build` | Overwrites all files from squad.config.ts |
+
+### Manual update
+
+```bash
+squad upgrade   # re-reads .squad/team.md and rewrites .codex/agents/
+```
 
 ---
 

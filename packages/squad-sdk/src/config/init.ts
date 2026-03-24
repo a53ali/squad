@@ -13,6 +13,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, cpSync, statSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
 import { execFileSync } from 'node:child_process';
+import { writeCodexAgentFiles } from './codex-gen.js';
 import { MODELS } from '../runtime/constants.js';
 import type { SquadConfig, ModelSelectionConfig, RoutingConfig } from '../runtime/config.js';
 import type { SubSquadDefinition } from '../streams/types.js';
@@ -1015,7 +1016,27 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
   } else {
     skippedFiles.push(toRelativePath(agentFile));
   }
-  
+
+  // -------------------------------------------------------------------------
+  // Generate .codex/agents/ for Codex CLI (`codex --agent squad --yolo`)
+  // -------------------------------------------------------------------------
+
+  try {
+    const codexAgents = agents.map(a => ({
+      name: a.name,
+      role: a.displayName ?? a.role,
+    }));
+    const written = writeCodexAgentFiles({
+      projectRoot: teamRoot,
+      teamName: projectName,
+      agents: codexAgents,
+      force: !skipExisting,
+    });
+    for (const f of written) createdFiles.push(f);
+  } catch {
+    // Non-fatal — Codex CLI integration is optional
+  }
+
   // -------------------------------------------------------------------------
   // Copy .squad/templates/ (optional)
   // -------------------------------------------------------------------------
