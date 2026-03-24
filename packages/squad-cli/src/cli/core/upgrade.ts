@@ -14,6 +14,7 @@ import { runMigrations } from './migrations.js';
 import { scrubEmails } from './email-scrub.js';
 import { getPackageVersion, stampVersion, readInstalledVersion } from './version.js';
 import { writeCodexAgentFiles, parseTeamMdAgents } from '@bradygaster/squad-sdk/config';
+import { writeClaudeAgentFiles, parseTeamMdAgentsForClaude } from '@bradygaster/squad-sdk/config';
 
 export interface UpgradeOptions {
   migrateDirectory?: boolean;
@@ -594,6 +595,26 @@ export async function runUpgrade(dest: string, options: UpgradeOptions = {}): Pr
     }
   } catch {
     // Non-fatal — Codex CLI integration is optional
+  }
+
+  // Refresh .claude/agents/ for Claude Code (`claude --agent squad --yolo`)
+  try {
+    const claudeAgents = parseTeamMdAgentsForClaude(dest);
+    if (claudeAgents.length > 0) {
+      const teamName = path.basename(dest);
+      const written = writeClaudeAgentFiles({
+        projectRoot: dest,
+        teamName,
+        agents: claudeAgents,
+        force: true,
+      });
+      if (written.length > 0) {
+        success(`refreshed ${written.length} Claude Code agent file(s) in .claude/agents/`);
+        filesUpdated.push(...written);
+      }
+    }
+  } catch {
+    // Non-fatal — Claude Code integration is optional
   }
 
   console.log();

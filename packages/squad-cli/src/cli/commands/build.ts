@@ -23,6 +23,7 @@ import { pathToFileURL } from 'node:url';
 import { success, warn, info, dim, BOLD, RESET, YELLOW, GREEN, RED } from '../core/output.js';
 import { fatal } from '../core/errors.js';
 import { writeCodexAgentFiles } from '@bradygaster/squad-sdk/config';
+import { writeClaudeAgentFiles } from '@bradygaster/squad-sdk/config';
 
 import type {
   SquadSDKConfig,
@@ -556,7 +557,7 @@ export async function runBuild(cwd: string, options: BuildOptions = {}): Promise
     const teamName = config.team?.name ?? path.basename(cwd);
     const codexAgents = config.agents.map(a => ({
       name: a.name,
-      role: typeof a.model === 'string' ? a.role : a.role,
+      role: a.role,
       description: a.description,
     }));
     const written = writeCodexAgentFiles({
@@ -567,6 +568,27 @@ export async function runBuild(cwd: string, options: BuildOptions = {}): Promise
     });
     if (written.length > 0) {
       dim(`  Codex CLI: generated ${written.length} agent file(s) in .codex/agents/`);
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  // Generate .claude/agents/ for Claude Code (`claude --agent squad --yolo`)
+  try {
+    const teamName = config.team?.name ?? path.basename(cwd);
+    const claudeAgents = config.agents.map(a => ({
+      name: a.name,
+      role: a.role,
+      description: a.description,
+    }));
+    const written = writeClaudeAgentFiles({
+      projectRoot: cwd,
+      teamName,
+      agents: claudeAgents,
+      force: true,
+    });
+    if (written.length > 0) {
+      dim(`  Claude Code: generated ${written.length} agent file(s) in .claude/agents/`);
     }
   } catch {
     // Non-fatal

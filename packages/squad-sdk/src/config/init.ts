@@ -14,6 +14,7 @@ import { fileURLToPath } from 'url';
 import { existsSync, cpSync, statSync, mkdirSync, writeFileSync, readFileSync, readdirSync } from 'fs';
 import { execFileSync } from 'node:child_process';
 import { writeCodexAgentFiles } from './codex-gen.js';
+import { writeClaudeAgentFiles } from './claude-gen.js';
 import { MODELS } from '../runtime/constants.js';
 import type { SquadConfig, ModelSelectionConfig, RoutingConfig } from '../runtime/config.js';
 import type { SubSquadDefinition } from '../streams/types.js';
@@ -1035,6 +1036,26 @@ ${projectDescription ? `- **Description:** ${projectDescription}\n` : ''}- **Cre
     for (const f of written) createdFiles.push(f);
   } catch {
     // Non-fatal — Codex CLI integration is optional
+  }
+
+  // -------------------------------------------------------------------------
+  // Generate .claude/agents/ for Claude Code (`claude --agent squad --yolo`)
+  // -------------------------------------------------------------------------
+
+  try {
+    const claudeAgents = agents.map(a => ({
+      name: a.name,
+      role: a.displayName ?? a.role,
+    }));
+    const written = writeClaudeAgentFiles({
+      projectRoot: teamRoot,
+      teamName: projectName,
+      agents: claudeAgents,
+      force: !skipExisting,
+    });
+    for (const f of written) createdFiles.push(f);
+  } catch {
+    // Non-fatal — Claude Code integration is optional
   }
 
   // -------------------------------------------------------------------------

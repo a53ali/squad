@@ -14,3 +14,4 @@ export * from './markdown-migration.js';
 export * from './legacy-fallback.js';
 export * from './feature-audit.js';
 export * from './codex-gen.js';
+export * from './claude-gen.js';

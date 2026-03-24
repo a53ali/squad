@@ -258,16 +258,24 @@ Run `squad build` to generate all the markdown. See the [SDK-First Mode Guide](d
 
 ---
 
-## Codex CLI Integration
+## Codex CLI & Claude Code Integration
 
-`squad init` and `squad upgrade` automatically generate `.codex/agents/` config files so your team works natively with [Codex CLI](https://github.com/openai/codex).
+`squad init`, `squad upgrade`, and `squad build` automatically generate agent config files for both **Codex CLI** and **Claude Code** so your team works natively with either tool.
 
 ### Quick start
 
+**Codex CLI:**
 ```bash
 npm install -g @openai/codex
-squad init            # generates .codex/agents/squad.toml + per-agent TOMLs
+squad init
 codex --agent squad --yolo
+```
+
+**Claude Code:**
+```bash
+npm install -g @anthropic-ai/claude-code
+squad init
+claude --agent squad --yolo
 ```
 
 ### What gets generated
@@ -275,27 +283,26 @@ codex --agent squad --yolo
 ```
 .codex/
 └── agents/
-    ├── squad.toml       ← coordinator: routes work, spawns members
-    ├── edie.toml        ← TypeScript Engineer
-    ├── mcmanus.toml     ← DevRel
-    └── ...              ← one file per squad member
+    ├── squad.toml       ← coordinator (Codex CLI)
+    ├── edie.toml
+    └── ...
+
+.claude/
+└── agents/
+    ├── squad.md         ← coordinator (Claude Code)
+    ├── edie.md
+    └── ...
 ```
 
-Each agent TOML contains `name`, `description`, and `developer_instructions` that reference the agent's charter in `.squad/agents/<name>/charter.md`. Codex reads these automatically when it spawns a subagent.
+Each file contains the agent's name, description, and instructions that reference its charter in `.squad/agents/<name>/charter.md`.
 
 ### Keeping files fresh
 
-| Command | Effect on `.codex/agents/` |
-|---------|---------------------------|
+| Command | Effect |
+|---------|--------|
 | `squad init` | Creates files (skips existing) |
-| `squad upgrade` | Overwrites all files from current team.md |
-| `squad build` | Overwrites all files from squad.config.ts |
-
-### Manual update
-
-```bash
-squad upgrade   # re-reads .squad/team.md and rewrites .codex/agents/
-```
+| `squad upgrade` | Overwrites from current `.squad/team.md` |
+| `squad build` | Overwrites from `squad.config.ts` |
 
 ---
 
